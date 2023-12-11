@@ -122,7 +122,7 @@ func editAlbum(newAlb album, id int64, db *sql.DB) error {
 func editAlbumHandler(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		log.Fatal("Error in getAlbumByIDHandler:", err)
+		log.Fatal("Error in editAlbumByIDHandler:", err)
 		return
 	}
 	db := c.MustGet("db").(*sql.DB)
@@ -134,6 +134,26 @@ func editAlbumHandler(c *gin.Context) {
 		c.IndentedJSON(http.StatusInternalServerError, newAlbum)
 	} else {
 		c.IndentedJSON(http.StatusOK, newAlbum)
+	}
+}
+
+func deleteAlbum(id int64, db *sql.DB) error {
+	_, err := db.Exec("DELETE FROM album WHERE id = $1", id)
+	if err != nil {
+		return fmt.Errorf("deleteAlbum: %v", err)
+	}
+	return nil
+}
+
+func deleteAlbumHandler(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		log.Fatal("Error in deleteAlbumHandler:", err)
+		return
+	}
+	db := c.MustGet("db").(*sql.DB)
+	if err = deleteAlbum(id, db); err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "delete failed"})
 	}
 }
 
@@ -158,5 +178,6 @@ func main() {
 	router.POST("/albums", addAlbumHandler)
 	router.GET("/albums/:id", getAlbumByIDHandler)
 	router.PUT("/albums/:id", editAlbumHandler)
+	router.DELETE("/albums/:id", deleteAlbumHandler)
 	router.Run("localhost:8080")
 }
