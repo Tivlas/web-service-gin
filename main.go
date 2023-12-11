@@ -111,6 +111,32 @@ func getAlbumByIDHandler(c *gin.Context) {
 	}
 }
 
+func editAlbum(newAlb album, id int64, db *sql.DB) error {
+	_, err := db.Exec("UPDATE album SET title = $1, artist = $2, price = $3 WHERE id = $4", newAlb.Title, newAlb.Artist, newAlb.Price, id)
+	if err != nil {
+		return fmt.Errorf("editAlbum: %v", err)
+	}
+	return nil
+}
+
+func editAlbumHandler(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		log.Fatal("Error in getAlbumByIDHandler:", err)
+		return
+	}
+	db := c.MustGet("db").(*sql.DB)
+	var newAlbum album
+	if err := c.BindJSON(&newAlbum); err != nil {
+		return
+	}
+	if err = editAlbum(newAlbum, id, db); err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, newAlbum)
+	} else {
+		c.IndentedJSON(http.StatusOK, newAlbum)
+	}
+}
+
 func main() {
 	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		host, port, os.Getenv("DBUSER"), os.Getenv("DBPASS"), dbname)
@@ -131,5 +157,6 @@ func main() {
 	router.GET("/albums", getAlbumsHandler)
 	router.POST("/albums", addAlbumHandler)
 	router.GET("/albums/:id", getAlbumByIDHandler)
+	router.PUT("/albums/:id", editAlbumHandler)
 	router.Run("localhost:8080")
 }
