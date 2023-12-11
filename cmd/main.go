@@ -24,5 +24,5 @@ func main() {
 	router.GET("/albums/:id", handler.GetById)
 	router.PUT("/albums/:id", handler.Edit)
 	router.DELETE("/albums/:id", handler.Delete)
-	router.Run("localhost:8080")
+	router.RunTLS("localhost:8080", "cert.cer", "key.pkey")
 }
